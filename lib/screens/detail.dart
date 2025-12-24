@@ -3,6 +3,8 @@ import '../services/job_service.dart';
 import '../bar.dart';
 import '../objects/works.dart';
 import 'package:readmore/readmore.dart';
+import 'package:intl/intl.dart';
+import 'package:flutter_rating_bar/flutter_rating_bar.dart';
 
 class DetailJob extends StatefulWidget {
   const DetailJob({super.key});
@@ -14,6 +16,7 @@ class DetailJob extends StatefulWidget {
 class _DetailJobState extends State<DetailJob> {
   final JobDetailService _jobDetailService = JobDetailService();
   final CommentService _commentService = CommentService();
+  final PostComment _postService = PostComment();
 
   CongViecItem? _jobDetail;
   List<BinhLuan> _comments = [];
@@ -22,6 +25,7 @@ class _DetailJobState extends State<DetailJob> {
   String? _errorMessage;
   int _jobId = 0;
   bool _isInitialDataLoaded = false;
+  double _mean = 0.0;
 
   @override
   void didChangeDependencies() {
@@ -67,6 +71,10 @@ class _DetailJobState extends State<DetailJob> {
 
         if (results[1] is List<BinhLuan>) {
           _comments = results[1] as List<BinhLuan>;
+          _mean = _comments.isEmpty
+              ? 0.0
+              : _comments.map((m) => m.saoBinhLuan).reduce((a, b) => a + b) /
+                    _comments.length;
         }
       });
     } catch (e) {
@@ -225,8 +233,7 @@ class _DetailJobState extends State<DetailJob> {
                 ),
               ),
             ),
-            SliverFillRemaining(
-              hasScrollBody: false,
+            SliverToBoxAdapter(
               child: SizedBox(
                 height: 500,
                 child: TabBarView(
@@ -247,6 +254,69 @@ class _DetailJobState extends State<DetailJob> {
                       description: detail.moTaNgan,
                     ),
                   ],
+                ),
+              ),
+            ),
+            const SliverToBoxAdapter(
+              child: Divider(thickness: 1, color: Colors.grey),
+            ),
+            SliverToBoxAdapter(child: Container(height: 10)),
+            const SliverToBoxAdapter(
+              child: Divider(thickness: 1, color: Colors.grey),
+            ),
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: SimpleRating(rating: _mean),
+              ),
+            ),
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: ReviewsSummary(
+                  mean: _mean,
+                  numReviews: _comments.length,
+                ),
+              ),
+            ),
+            SliverToBoxAdapter(
+              child: _comments.isEmpty? Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Center(child: Text("Chưa có bình luận nào", style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w300))),
+              ) : SizedBox(
+                height: 200,
+                child: ListView.builder(
+                  scrollDirection: Axis.horizontal,
+                  itemCount: _comments.length > 4 ? 4 : _comments.length,
+                  itemBuilder: (context, index) {
+                    return Padding(
+                      padding: const EdgeInsets.only(left: 12.0, right: 8),
+                      child: SizedBox(
+                        width: 250,
+                        child: CommentItem(binhLuan: _comments[index]),
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ),
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: StaticCommentForm(
+                  onSend: (content, rating) async {
+                    final success = await _postService.sendComment(
+                      jobId: _jobId,
+                      content: content,
+                      rating: rating,
+                    );
+                    if (success) {
+                      _loadAllData();
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text("Đã đăng bình luận!")),
+                      );
+                    }
+                  },
                 ),
               ),
             ),
@@ -476,6 +546,227 @@ class _BuildPriceDetailState extends State<BuildPriceDetail> {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class ReviewsSummary extends StatelessWidget {
+  final double _mean;
+  final int _numReviews;
+
+  const ReviewsSummary({
+    super.key,
+    required double mean,
+    required int numReviews,
+  }) : _mean = mean,
+       _numReviews = numReviews;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildRatingRow('Seller communication level', _mean),
+        _buildRatingRow('Quality of delivery', _mean),
+        _buildRatingRow('Value of delivery', _mean),
+        const SizedBox(height: 8),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              '$_numReviews reviews',
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+            ),
+            Text(
+              'See All',
+              style: TextStyle(color: Colors.green, fontSize: 18),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildRatingRow(String label, double rating) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(label, style: const TextStyle(fontSize: 18)),
+          Row(
+            children: [
+              const Icon(Icons.star, size: 18, color: Colors.black),
+              const SizedBox(width: 4),
+              Text(rating.toStringAsFixed(1)),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class CommentItem extends StatelessWidget {
+  final BinhLuan binhLuan;
+
+  const CommentItem({required this.binhLuan, super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final displayName = binhLuan.tenNguoiBinhLuan.isNotEmpty
+        ? binhLuan.tenNguoiBinhLuan
+        : 'Anonymous';
+    final avatarWidget = binhLuan.avatar.isNotEmpty
+        ? CircleAvatar(backgroundImage: NetworkImage(binhLuan.avatar))
+        : CircleAvatar(
+            backgroundColor: Colors.blueAccent,
+            child: Text(
+              displayName[0].toUpperCase(),
+              style: TextStyle(color: Colors.white),
+            ),
+          );
+    final flag = '🇺🇸';
+    final ngay = DateFormat('dd/MM/yyyy HH:mm').format(binhLuan.ngayBinhLuan);
+
+    return Container(
+      margin: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      padding: EdgeInsets.all(8),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: Colors.grey.shade300),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          ListTile(
+            contentPadding: EdgeInsets.zero,
+            leading: avatarWidget,
+            title: Text(displayName),
+            subtitle: Text(flag),
+          ),
+          SizedBox(height: 4),
+          Text(binhLuan.noiDung, maxLines: 3, overflow: TextOverflow.ellipsis,),
+          Spacer(),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+            children: [
+              const Icon(Icons.star, size: 18, color: Colors.black),
+              const SizedBox(width: 4),
+              Text(binhLuan.saoBinhLuan.toString(), ),
+            ],
+          ),
+              Text(ngay, style: TextStyle(color: Colors.grey, fontSize: 12)),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+class SimpleRating extends StatelessWidget {
+  final double rating;
+
+  const SimpleRating({super.key, required this.rating});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        RatingBarIndicator(
+          rating: rating,
+          itemBuilder: (context, index) => const Icon(
+            Icons.star,
+            color: Colors.black,
+          ),
+          unratedColor: Colors.grey.shade300,
+          itemCount: 5,
+          itemSize: 26.0,
+          direction: Axis.horizontal,
+        ),
+        const SizedBox(width: 8),
+        Text(
+          rating.toStringAsFixed(1),
+          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
+        ),
+      ],
+    );
+  }
+}
+
+class StaticCommentForm extends StatefulWidget {
+  final Function(String content, int rating) onSend;
+
+  const StaticCommentForm({super.key, required this.onSend});
+
+  @override
+  State<StaticCommentForm> createState() => _StaticCommentFormState();
+}
+
+class _StaticCommentFormState extends State<StaticCommentForm> {
+  final _controller = TextEditingController();
+  double _currentRating = 5.0;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.grey.shade50,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.grey.shade300),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text("Add your comment", 
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+          const SizedBox(height: 12),
+          RatingBar.builder(
+            initialRating: 5,
+            minRating: 1,
+            direction: Axis.horizontal,
+            allowHalfRating: false,
+            itemCount: 5,
+            itemSize: 30,
+            itemBuilder: (context, _) => const Icon(Icons.star, color: Colors.amber),
+            onRatingUpdate: (rating) => setState(() => _currentRating = rating),
+          ),
+          const SizedBox(height: 12),
+          TextField(
+            controller: _controller,
+            maxLines: 3,
+            decoration: InputDecoration(
+              hintText: "Enter your review...",
+              fillColor: Colors.white,
+              filled: true,
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+            ),
+          ),
+          const SizedBox(height: 12),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF1DBF73),
+                padding: const EdgeInsets.symmetric(vertical: 12),
+              ),
+              onPressed: () {
+                if (_controller.text.isNotEmpty) {
+                  widget.onSend(_controller.text, _currentRating.toInt());
+                  _controller.clear();
+                }
+              },
+              child: const Text("Send", 
+                style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+            ),
+          ),
+        ],
       ),
     );
   }

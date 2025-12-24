@@ -1,4 +1,6 @@
+import 'package:dart_jsonwebtoken/dart_jsonwebtoken.dart';
 import 'package:dio/dio.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../api/api_client.dart';
 import '../objects/works.dart';
 
@@ -258,6 +260,69 @@ class JobDetailService {
     } catch (e) {
       print('Lỗi không xác định khi lấy chi tiết: $e');
       return 'Lỗi không xác định.';
+    }
+  }
+}
+class PostComment {
+  final ApiClient _client = ApiClient();
+  Future<int?> _getUserId() async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('user_token');
+    if (token == null) return null;
+    try {
+      final jwt = JWT.decode(token);
+      return int.tryParse(jwt.payload['id'].toString());
+    } catch (e) {
+      print("Lỗi giải mã Token: $e");
+      return null;
+    }
+  }
+
+  Future<bool> sendComment({
+    required int jobId,
+    required String content,
+    required int rating,
+  }) async {
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+    final String? userToken = prefs.getString('user_token');
+    final int? userId = await _getUserId();
+
+    if (userId == null || userToken == null) {
+      print("Lỗi: Thiếu User ID hoặc Token đăng nhập");
+      return false;
+    }
+
+    final Map<String, dynamic> data = {
+      "id": 0,
+      "maCongViec": jobId,
+      "maNguoiBinhLuan": userId,
+      "ngayBinhLuan": DateTime.now().toIso8601String(), 
+      "noiDung": content,
+      "saoBinhLuan": rating,
+    };
+
+    try {
+      print("Payload: $data");
+
+      final response = await _client.post(
+        '/api/binh-luan',
+        data: data,
+        options: Options(
+          headers: {
+            'token': userToken,
+          },
+        ),
+      );
+
+      print("Kết quả POST: ${response.statusCode}");
+      return response.statusCode == 200 || response.statusCode == 201;
+    } on DioException catch (e) {
+      print("Lỗi API (Status Code): ${e.response?.statusCode}");
+      print("Thông điệp từ Server: ${e.response?.data}"); 
+      return false;
+    } catch (e) {
+      print("Lỗi không xác định: $e");
+      return false;
     }
   }
 }
