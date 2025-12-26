@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../services/job_service.dart';
 import '../bar.dart';
 import '../objects/works.dart';
-
+import 'package:anim_search_bar/anim_search_bar.dart';
 class ListJob extends StatefulWidget {
   const ListJob({super.key});
 
@@ -19,6 +19,12 @@ class _ListJobState extends State<ListJob> {
   String _query = 'Design';
   List<Map<String, dynamic>> _jobs = [];
   bool _isInitialDataLoaded = false;
+  final TextEditingController _textController = TextEditingController();
+  @override
+  void dispose() {
+    _textController.dispose();
+    super.dispose();
+  }
   @override
   void initState() {
     super.initState();
@@ -57,6 +63,7 @@ class _ListJobState extends State<ListJob> {
       _isLoading = true;
     });
     final result = await _jobService.searchJobsByName(_query);
+    if (!mounted) return;
     setState(() {
       _isLoading = false;
       if (result is List<Map<String, dynamic>>) {
@@ -74,27 +81,40 @@ class _ListJobState extends State<ListJob> {
       bottomNavigationBar: const SafeArea(child: CustomBottomBar()),
 
       appBar: AppBar(
-        elevation: 0,
-        surfaceTintColor: Colors.transparent,
-
-        title: Text(
-          _query,
-          style: TextStyle(
-            color: Colors.black,
-            fontSize: 28,
-            fontWeight: FontWeight.bold,
+      elevation: 0,
+      backgroundColor: Colors.white,
+      surfaceTintColor: Colors.transparent,
+      title: Text(
+        _query,
+        style: const TextStyle(color: Colors.black, fontSize: 26, fontWeight: FontWeight.bold),
+      ),
+      actions: [
+        Padding(
+          padding: const EdgeInsets.only(right: 10),
+          child: AnimSearchBar(
+            width: MediaQuery.of(context).size.width * 0.8,
+            textController: _textController,
+            onSuffixTap: () {
+              setState(() {
+                _textController.clear();
+              });
+            },
+            onSubmitted: (value) {
+              if (value.trim().isNotEmpty) {
+                setState(() {
+                  _query = value;
+                });
+                _loadJobsByQuery();
+              }
+            },
+            color: Colors.white,
+            helpText: "Search by '$_query'...",
+            closeSearchOnSuffixTap: true,
+            autoFocus: true,
           ),
         ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.search, color: Colors.black, size: 28),
-            onPressed: () {
-              print('Đã nhấn nút Search');
-            },
-          ),
-          const SizedBox(width: 8),
-        ],
-      ),
+      ],
+    ),
       body: _buildBodyContent(),
     );
   }

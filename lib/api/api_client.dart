@@ -28,7 +28,6 @@ class ApiClient {
       ),
     );
 
-    // interceptor log
     _dio.interceptors.add(
       InterceptorsWrapper(
         onRequest: (options, handler) {
@@ -57,7 +56,6 @@ class ApiClient {
 
   Dio get dio => _dio;
 
-  /// GET
   Future<Response> get(String path,
       {Map<String, dynamic>? queryParameters, Options? options}) async {
     try {
@@ -68,7 +66,6 @@ class ApiClient {
     }
   }
 
-  /// POST
   Future<Response> post(String path,
       {dynamic data, Options? options}) async {
     try {
@@ -78,7 +75,6 @@ class ApiClient {
     }
   }
 
-  /// PUT
   Future<Response> put(String path,
       {dynamic data, Options? options}) async {
     try {
@@ -88,7 +84,6 @@ class ApiClient {
     }
   }
 
-  /// PATCH
   Future<Response> patch(String path,
       {dynamic data, Options? options}) async {
     try {
@@ -98,7 +93,6 @@ class ApiClient {
     }
   }
 
-  /// DELETE
   Future<Response> delete(String path,
       {dynamic data, Options? options}) async {
     try {
