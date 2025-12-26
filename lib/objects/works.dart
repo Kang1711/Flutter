@@ -70,6 +70,25 @@ class LoaiCongViec {
       dsNhomChiTietLoai: nhomChiTietList,
     );
   }
+
+  Map<String, dynamic> toMap() {
+    return {
+      'id': id,
+      'tenLoaiCongViec': tenLoaiCongViec,
+      'dsNhomChiTietLoai': dsNhomChiTietLoai
+          .map(
+            (n) => {
+              'id': n.id,
+              'tenNhom': n.tenNhom,
+              'hinhAnh': n.hinhAnh,
+              'dsChiTietLoai': n.dsChiTietLoai
+                  .map((c) => {'id': c.id, 'tenChiTiet': c.tenChiTiet})
+                  .toList(),
+            },
+          )
+          .toList(),
+    };
+  }
 }
 
 class CongViec {
@@ -144,6 +163,7 @@ class CongViecItem {
     );
   }
 }
+
 class BinhLuan {
   final int id;
   final DateTime ngayBinhLuan;
@@ -173,11 +193,10 @@ class BinhLuan {
   }
   static List<BinhLuan> fromJsonList(List<dynamic>? list) {
     return list != null
-        ? list
-            .map((e) => BinhLuan.fromJson(e as Map<String, dynamic>))
-            .toList()
+        ? list.map((e) => BinhLuan.fromJson(e as Map<String, dynamic>)).toList()
         : [];
   }
+
   static DateTime _parseDate(String value) {
     try {
       return DateTime.parse(value);

@@ -3,14 +3,14 @@ import 'package:flutter/material.dart';
 import '../bar.dart';
 import '../services/job_service.dart';
 
-class JobCategoryPage extends StatefulWidget {
-  const JobCategoryPage({super.key});
+class JobCategoryScreen extends StatefulWidget {
+  const JobCategoryScreen({super.key});
 
   @override
-  State<JobCategoryPage> createState() => _JobCategoryPageState();
+  State<JobCategoryScreen> createState() => _JobCategoryScreenState();
 }
 
-class _JobCategoryPageState extends State<JobCategoryPage>
+class _JobCategoryScreenState extends State<JobCategoryScreen>
     with SingleTickerProviderStateMixin {
   final JobCategoryService _service = JobCategoryService();
   List<LoaiCongViec> _jobMenu = [];
@@ -72,9 +72,7 @@ class _JobCategoryPageState extends State<JobCategoryPage>
         actions: [
           IconButton(
             icon: const Icon(Icons.search, color: Colors.black, size: 28),
-            onPressed: () {
-              print('Đã nhấn nút Kim cương');
-            },
+            onPressed: () {},
           ),
           const SizedBox(width: 8),
         ],
@@ -145,7 +143,7 @@ class _JobCategoryPageState extends State<JobCategoryPage>
 
         final subtitleText = loaiCongViec.dsNhomChiTietLoai
             .map((nhom) => nhom.tenNhom)
-            .take(3) 
+            .take(3)
             .join(', ');
 
         return ListTile(
@@ -190,10 +188,9 @@ class _JobCategoryPageState extends State<JobCategoryPage>
                       'id': n.id,
                       'tenNhom': n.tenNhom,
                       'hinhAnh': n.hinhAnh,
-                      'dsChiTietLoai': n.dsChiTietLoai.map((c) => {
-                          'id': c.id, 
-                          'tenChiTiet': c.tenChiTiet
-                      }).toList(),
+                      'dsChiTietLoai': n.dsChiTietLoai
+                          .map((c) => {'id': c.id, 'tenChiTiet': c.tenChiTiet})
+                          .toList(),
                     },
                   )
                   .toList(),

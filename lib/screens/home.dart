@@ -2,37 +2,48 @@ import 'package:flutter/material.dart';
 import '../objects/items.dart';
 import '../bar.dart';
 
-class MyWidget extends StatelessWidget {
-  MyWidget({super.key});
+class HomeScreen extends StatefulWidget {
+  const HomeScreen({super.key});
+
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
   final TextEditingController _searchController = TextEditingController();
-  final blackOutline = const OutlineInputBorder(
+
+  final OutlineInputBorder _defaultInputBorder = const OutlineInputBorder(
     borderSide: BorderSide(color: Colors.grey),
   );
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
   void _navigateToResults(BuildContext context) {
     final query = _searchController.text.trim();
+
     if (query.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Vui lòng nhập từ khóa tìm kiếm.')),
       );
       return;
     }
-    Navigator.pushNamed(
-    context,
-    '/search',
-    arguments: query,
-  );
+
+    Navigator.pushNamed(context, '/search', arguments: query);
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      bottomNavigationBar: SafeArea(child: CustomBottomBar()),
+      bottomNavigationBar: const SafeArea(child: CustomBottomBar()),
       appBar: AppBar(
         automaticallyImplyLeading: false,
         title: Row(
-          mainAxisAlignment: MainAxisAlignment.start,
-          children: [
-            const Text(
+          children: const [
+            Text(
               'fiverr',
               style: TextStyle(
                 color: Colors.black,
@@ -40,15 +51,12 @@ class MyWidget extends StatelessWidget {
                 fontWeight: FontWeight.bold,
               ),
             ),
-            Padding(
-              padding: const EdgeInsets.only(left: 2.0),
-              child: const Text(
-                ".",
-                style: TextStyle(
-                  color: Colors.green,
-                  fontSize: 40,
-                  fontWeight: FontWeight.w700,
-                ),
+            Text(
+              '.',
+              style: TextStyle(
+                color: Colors.green,
+                fontSize: 40,
+                fontWeight: FontWeight.w700,
               ),
             ),
           ],
@@ -60,9 +68,7 @@ class MyWidget extends StatelessWidget {
               color: Colors.black,
               size: 28,
             ),
-            onPressed: () {
-              print('Đã nhấn nút Kim cương');
-            },
+            onPressed: () {},
           ),
         ],
       ),
@@ -70,24 +76,26 @@ class MyWidget extends StatelessWidget {
         builder: (context, constraints) {
           return SingleChildScrollView(
             child: ConstrainedBox(
-              constraints: BoxConstraints(
-                minHeight: constraints.maxHeight,
-              ),
+              constraints: BoxConstraints(minHeight: constraints.maxHeight),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Divider(thickness: 1, color: Colors.grey),
+                  const Divider(thickness: 1, color: Colors.grey),
                   const SizedBox(height: 16),
+
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 16),
                     child: TextField(
                       controller: _searchController,
                       decoration: InputDecoration(
                         hintText: 'Search services',
-                        prefixIcon: const Icon(Icons.search, color: Colors.grey),
-                        border: blackOutline,
-                        enabledBorder: blackOutline,
-                        focusedBorder: blackOutline,
+                        prefixIcon: const Icon(
+                          Icons.search,
+                          color: Colors.grey,
+                        ),
+                        border: _defaultInputBorder,
+                        enabledBorder: _defaultInputBorder,
+                        focusedBorder: _defaultInputBorder,
                         contentPadding: const EdgeInsets.symmetric(
                           vertical: 10,
                           horizontal: 20,
@@ -96,8 +104,9 @@ class MyWidget extends StatelessWidget {
                       onSubmitted: (_) => _navigateToResults(context),
                     ),
                   ),
-    
+
                   const SizedBox(height: 30),
+
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 16),
                     child: Row(
@@ -105,10 +114,14 @@ class MyWidget extends StatelessWidget {
                       children: [
                         const Text(
                           "Popular Services",
-                          style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+                          style: TextStyle(
+                            fontSize: 22,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                         GestureDetector(
-                          onTap: () => Navigator.pushNamed(context, '/categories'),
+                          onTap: () =>
+                              Navigator.pushNamed(context, '/categories'),
                           child: const Text(
                             "See all",
                             style: TextStyle(
@@ -121,7 +134,9 @@ class MyWidget extends StatelessWidget {
                       ],
                     ),
                   ),
+
                   const SizedBox(height: 10),
+
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 16),
                     child: SizedBox(
@@ -136,7 +151,9 @@ class MyWidget extends StatelessWidget {
                       ),
                     ),
                   ),
+
                   const SizedBox(height: 40),
+
                   Padding(
                     padding: const EdgeInsets.all(16),
                     child: ClipRRect(
@@ -152,7 +169,7 @@ class MyWidget extends StatelessWidget {
                       ),
                     ),
                   ),
-    
+
                   const SizedBox(height: 20),
                 ],
               ),

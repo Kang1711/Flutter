@@ -1,10 +1,10 @@
+import 'package:cyber/screens/profile/widgets/edit.dart';
 import 'package:flutter/material.dart';
-import '../api/api_client.dart';
+import '../../api/api_client.dart';
 import 'package:dio/dio.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:dart_jsonwebtoken/dart_jsonwebtoken.dart';
-import '../bar.dart'; 
-import '../edit.dart'; 
+import '../../bar.dart'; 
 
 class UserService {
   final ApiClient _client = ApiClient();

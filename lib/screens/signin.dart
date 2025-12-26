@@ -4,17 +4,6 @@ import 'package:flutter/gestures.dart';
 import '../screens/home.dart';
 import '../services/job_service.dart';
 
-class HomePage extends StatelessWidget {
-  const HomePage({super.key});
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: Text('Trang Chủ Fiverr')),
-      body: Center(child: Text('Đăng nhập thành công!')),
-    );
-  }
-}
-
 class SignIn extends StatefulWidget {
   const SignIn({super.key});
 
@@ -62,7 +51,7 @@ class _SignInState extends State<SignIn> {
           if (mounted) {
             Navigator.pushReplacement(
               context,
-              MaterialPageRoute(builder: (context) => MyWidget()),
+              MaterialPageRoute(builder: (context) => HomeScreen()),
             );
           }
         } else {

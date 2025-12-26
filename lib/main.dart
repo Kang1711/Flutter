@@ -2,11 +2,11 @@ import 'package:flutter/material.dart';
 import 'screens/signin.dart';
 import 'screens/home.dart';
 import 'screens/signup.dart';
-import 'screens/infor.dart';
+import 'screens/profile/infor.dart';
 import 'screens/categories.dart';
 import 'screens/list.dart';
-import 'screens/jobs.dart';
-import 'screens/detail.dart';
+import 'screens/list_job/jobs.dart';
+import 'screens/detail_job/detail.dart';
 
 void main() {
   runApp(const MainApp());
@@ -21,13 +21,13 @@ class MainApp extends StatelessWidget {
       initialRoute: '/signin',
       routes: {
         '/signin': (context) => SignIn(),
-        '/home': (context) => MyWidget(),
+        '/home': (context) => HomeScreen(),
         '/signup': (context) => SignUp(),
         '/profile': (context) => ProfilePage(),
-        '/categories': (context) => JobCategoryPage(),
-        '/list': (context) =>JobListPage(),
-        '/search': (context) =>ListJob(),
-        '/detail': (context) =>DetailJob(),
+        '/categories': (context) => JobCategoryScreen(),
+        '/list': (context) => JobListPage(),
+        '/search': (context) => ListJobScreen(),
+        '/detail': (context) => DetailJob(),
       },
     );
   }

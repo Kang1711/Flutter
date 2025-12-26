@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
-import '../services/job_service.dart';
-import '../bar.dart';
-import '../objects/works.dart';
+import '../../services/job_service.dart';
+import '../../bar.dart';
+import '../../objects/works.dart';
 import 'package:readmore/readmore.dart';
-import 'package:intl/intl.dart';
 import 'package:flutter_rating_bar/flutter_rating_bar.dart';
+import 'widgets/price_detail_card.dart';
+import 'widgets/level_badge.dart';
+import 'widgets/comment_item.dart';
+import 'widgets/reviews_summary.dart';
 
 class DetailJob extends StatefulWidget {
   const DetailJob({super.key});
@@ -280,25 +283,38 @@ class _DetailJobState extends State<DetailJob> {
               ),
             ),
             SliverToBoxAdapter(
-              child: _comments.isEmpty? Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Center(child: Text("Chưa có bình luận nào", style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w300))),
-              ) : SizedBox(
-                height: 200,
-                child: ListView.builder(
-                  scrollDirection: Axis.horizontal,
-                  itemCount: _comments.length > 4 ? 4 : _comments.length,
-                  itemBuilder: (context, index) {
-                    return Padding(
-                      padding: const EdgeInsets.only(left: 12.0, right: 8),
-                      child: SizedBox(
-                        width: 250,
-                        child: CommentItem(binhLuan: _comments[index]),
+              child: _comments.isEmpty
+                  ? Padding(
+                      padding: const EdgeInsets.all(16.0),
+                      child: Center(
+                        child: Text(
+                          "Chưa có bình luận nào",
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w300,
+                          ),
+                        ),
                       ),
-                    );
-                  },
-                ),
-              ),
+                    )
+                  : SizedBox(
+                      height: 200,
+                      child: ListView.builder(
+                        scrollDirection: Axis.horizontal,
+                        itemCount: _comments.length > 4 ? 4 : _comments.length,
+                        itemBuilder: (context, index) {
+                          return Padding(
+                            padding: const EdgeInsets.only(
+                              left: 12.0,
+                              right: 8,
+                            ),
+                            child: SizedBox(
+                              width: 250,
+                              child: CommentItem(binhLuan: _comments[index]),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
             ),
             SliverToBoxAdapter(
               child: Padding(
@@ -327,347 +343,6 @@ class _DetailJobState extends State<DetailJob> {
   }
 }
 
-class LevelBadge extends StatelessWidget {
-  final int level;
-
-  const LevelBadge({super.key, required this.level});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(
-        color: Colors.grey.shade200,
-        borderRadius: BorderRadius.circular(6),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(
-            'Level $level',
-            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
-          ),
-          const SizedBox(width: 6),
-          _diamond(true),
-          _diamond(level >= 2),
-          _diamond(level >= 3),
-        ],
-      ),
-    );
-  }
-
-  Widget _diamond(bool active) {
-    return Padding(
-      padding: const EdgeInsets.only(left: 2),
-      child: Transform.rotate(
-        angle: 0.785398,
-        child: Icon(
-          Icons.square,
-          size: 10,
-          color: active ? Colors.black : Colors.black26,
-        ),
-      ),
-    );
-  }
-}
-
-class BuildPriceDetail extends StatefulWidget {
-  final int price;
-  final String title;
-  final String description;
-
-  const BuildPriceDetail({
-    super.key,
-    required this.price,
-    required this.title,
-    required this.description,
-  });
-
-  @override
-  State<BuildPriceDetail> createState() => _BuildPriceDetailState();
-}
-
-class _BuildPriceDetailState extends State<BuildPriceDetail> {
-  bool expressSelected = false;
-  int get totalPrice => widget.price + (expressSelected ? 20 : 0);
-  @override
-  Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            widget.title,
-            style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 16),
-          Text(
-            widget.description,
-            style: const TextStyle(color: Colors.grey, fontSize: 14),
-          ),
-          const SizedBox(height: 20),
-
-          _buildInfoRow("Revisions", "Unlimited"),
-          _buildInfoRow("Delivery Days", "3 Days"),
-          _buildInfoRow("Number of concepts included", "1"),
-
-          const SizedBox(height: 10),
-
-          _buildCheckRow("Logo transparency", true),
-          _buildCheckRow("Vector file", false),
-          _buildCheckRow("Printable file", false),
-          _buildCheckRow("3D mockup", true),
-          _buildCheckRow("Source file", false),
-
-          const SizedBox(height: 20),
-          _buildExpressDeliveryRow(),
-          const SizedBox(height: 20),
-          SizedBox(
-            width: double.infinity,
-            height: 48,
-            child: ElevatedButton(
-              onPressed: () {},
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF1DBF73),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(4),
-                ),
-              ),
-              child: Text(
-                "Continue (\$$totalPrice)",
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 18,
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(height: 20),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Text(
-                'Frequently Asked Questions',
-                style: TextStyle(
-                  color: Color.fromARGB(255, 0, 0, 0),
-                  fontWeight: FontWeight.bold,
-                  fontSize: 20,
-                ),
-              ),
-              const Icon(
-                Icons.keyboard_arrow_down,
-                size: 24,
-                color: Color.fromARGB(255, 119, 118, 118),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildInfoRow(String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 16),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(
-            label,
-            style: const TextStyle(color: Colors.black87, fontSize: 18),
-          ),
-          Text(
-            value,
-            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildCheckRow(String label, bool isAvailable) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 16),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(
-            label,
-            style: const TextStyle(color: Colors.black87, fontSize: 18),
-          ),
-          isAvailable
-              ? const Icon(Icons.check, color: Color(0xFF1DBF73), size: 18)
-              : const Text(
-                  "__",
-                  style: TextStyle(
-                    color: Color.fromARGB(255, 0, 0, 0),
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildExpressDeliveryRow() {
-    return InkWell(
-      onTap: () => setState(() => expressSelected = !expressSelected),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 16),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Row(
-              children: [
-                Container(
-                  width: 20,
-                  height: 20,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    border: Border.all(color: Colors.green, width: 2),
-                    color: expressSelected ? Colors.green : Colors.transparent,
-                  ),
-                  child: expressSelected
-                      ? const Icon(Icons.check, color: Colors.white, size: 16)
-                      : null,
-                ),
-                const SizedBox(width: 8),
-                const Text(
-                  "Express Delivery in 24 Hours",
-                  style: TextStyle(color: Colors.black87, fontSize: 18),
-                ),
-              ],
-            ),
-            Text(
-              "+\$20",
-              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class ReviewsSummary extends StatelessWidget {
-  final double _mean;
-  final int _numReviews;
-
-  const ReviewsSummary({
-    super.key,
-    required double mean,
-    required int numReviews,
-  }) : _mean = mean,
-       _numReviews = numReviews;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _buildRatingRow('Seller communication level', _mean),
-        _buildRatingRow('Quality of delivery', _mean),
-        _buildRatingRow('Value of delivery', _mean),
-        const SizedBox(height: 8),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(
-              '$_numReviews reviews',
-              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
-            ),
-            Text(
-              'See All',
-              style: TextStyle(color: Colors.green, fontSize: 18),
-            ),
-          ],
-        ),
-      ],
-    );
-  }
-
-  Widget _buildRatingRow(String label, double rating) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 16),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(label, style: const TextStyle(fontSize: 18)),
-          Row(
-            children: [
-              const Icon(Icons.star, size: 18, color: Colors.black),
-              const SizedBox(width: 4),
-              Text(rating.toStringAsFixed(1)),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class CommentItem extends StatelessWidget {
-  final BinhLuan binhLuan;
-
-  const CommentItem({required this.binhLuan, super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    final displayName = binhLuan.tenNguoiBinhLuan.isNotEmpty
-        ? binhLuan.tenNguoiBinhLuan
-        : 'Anonymous';
-    final avatarWidget = binhLuan.avatar.isNotEmpty
-        ? CircleAvatar(backgroundImage: NetworkImage(binhLuan.avatar))
-        : CircleAvatar(
-            backgroundColor: Colors.blueAccent,
-            child: Text(
-              displayName[0].toUpperCase(),
-              style: TextStyle(color: Colors.white),
-            ),
-          );
-    final flag = '🇺🇸';
-    final ngay = DateFormat('dd/MM/yyyy HH:mm').format(binhLuan.ngayBinhLuan);
-
-    return Container(
-      margin: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-      padding: EdgeInsets.all(8),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: Colors.grey.shade300),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          ListTile(
-            contentPadding: EdgeInsets.zero,
-            leading: avatarWidget,
-            title: Text(displayName),
-            subtitle: Text(flag),
-          ),
-          SizedBox(height: 4),
-          Text(binhLuan.noiDung, maxLines: 3, overflow: TextOverflow.ellipsis,),
-          Spacer(),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Row(
-            children: [
-              const Icon(Icons.star, size: 18, color: Colors.black),
-              const SizedBox(width: 4),
-              Text(binhLuan.saoBinhLuan.toString(), ),
-            ],
-          ),
-              Text(ngay, style: TextStyle(color: Colors.grey, fontSize: 12)),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-}
 class SimpleRating extends StatelessWidget {
   final double rating;
 
@@ -680,10 +355,8 @@ class SimpleRating extends StatelessWidget {
       children: [
         RatingBarIndicator(
           rating: rating,
-          itemBuilder: (context, index) => const Icon(
-            Icons.star,
-            color: Colors.black,
-          ),
+          itemBuilder: (context, index) =>
+              const Icon(Icons.star, color: Colors.black),
           unratedColor: Colors.grey.shade300,
           itemCount: 5,
           itemSize: 26.0,
@@ -711,6 +384,11 @@ class StaticCommentForm extends StatefulWidget {
 class _StaticCommentFormState extends State<StaticCommentForm> {
   final _controller = TextEditingController();
   double _currentRating = 5.0;
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -724,8 +402,10 @@ class _StaticCommentFormState extends State<StaticCommentForm> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text("Add your comment", 
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+          const Text(
+            "Add your comment",
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          ),
           const SizedBox(height: 12),
           RatingBar.builder(
             initialRating: 5,
@@ -734,7 +414,8 @@ class _StaticCommentFormState extends State<StaticCommentForm> {
             allowHalfRating: false,
             itemCount: 5,
             itemSize: 30,
-            itemBuilder: (context, _) => const Icon(Icons.star, color: Colors.amber),
+            itemBuilder: (context, _) =>
+                const Icon(Icons.star, color: Colors.amber),
             onRatingUpdate: (rating) => setState(() => _currentRating = rating),
           ),
           const SizedBox(height: 12),
@@ -745,7 +426,9 @@ class _StaticCommentFormState extends State<StaticCommentForm> {
               hintText: "Enter your review...",
               fillColor: Colors.white,
               filled: true,
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
             ),
           ),
           const SizedBox(height: 12),
@@ -762,8 +445,13 @@ class _StaticCommentFormState extends State<StaticCommentForm> {
                   _controller.clear();
                 }
               },
-              child: const Text("Send", 
-                style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+              child: const Text(
+                "Send",
+                style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
             ),
           ),
         ],

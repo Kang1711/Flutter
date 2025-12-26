@@ -50,7 +50,6 @@ class _JobListPageState extends State<JobListPage> {
           ScaffoldMessenger.of(
             context,
           ).showSnackBar(SnackBar(content: Text('Đã chọn nhóm: $groupName')));
-          // TODO: Thêm logic điều hướng tới danh sách công việc của nhóm này
         },
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
