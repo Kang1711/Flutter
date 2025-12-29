@@ -4,7 +4,8 @@ import '../../api/api_client.dart';
 import 'package:dio/dio.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:dart_jsonwebtoken/dart_jsonwebtoken.dart';
-import '../../bar.dart'; 
+import '../../bar.dart';
+import 'package:flutter/foundation.dart';
 
 class UserService {
   final ApiClient _client = ApiClient();
@@ -15,7 +16,6 @@ class UserService {
     final String? token = prefs.getString('user_token');
 
     if (token == null) {
-      print('Token không tồn tại trong SharedPreferences.');
       return null;
     }
     Map<String, dynamic>? userData;
@@ -23,10 +23,8 @@ class UserService {
       final JWT jwt = JWT.decode(token);
       userData = jwt.payload as Map<String, dynamic>;
     } on JWTException {
-      print('Lỗi giải mã: Cấu trúc JWT sai.');
       return null;
     } catch (e) {
-      print('Lỗi giải mã token: $e');
       return null;
     }
     dynamic userIdRaw = userData['id'];
@@ -43,7 +41,6 @@ class UserService {
   Future<Map<String, dynamic>?> getUserDetails() async {
     final int? userId = await getUserIdFromToken();
     if (userId == null) {
-      print('Lỗi: Không tìm thấy User ID đã lưu. Không thể gọi API.');
       return null;
     }
 
@@ -54,13 +51,13 @@ class UserService {
         final data = response.data as Map<String, dynamic>;
         return data['content'] as Map<String, dynamic>?;
       }
-      print('Lỗi: Phản hồi API không thành công (${response.statusCode}).');
       return null;
     } on DioException catch (e) {
-      print('Lỗi Dio khi lấy thông tin người dùng: ${e.response?.statusCode ?? 'N/A'} - ${e.message}');
+      if (kDebugMode) {
+        print('Lỗi không xác định khi cập nhật hồ sơ: $e');
+      }
       return null;
     } catch (e) {
-      print('Lỗi không xác định khi lấy thông tin người dùng: $e');
       return null;
     }
   }
@@ -70,36 +67,29 @@ class UserService {
     Map<String, dynamic> data,
   ) async {
     final String path = '$_userPath/$userId';
-    print('[PUT/PATCH] Cập nhật thông tin người dùng: $path');
-    print('Payload gửi đi: ${data.toString()}'); 
     try {
       final response = await _client.put(path, data: data);
 
       if (response.statusCode == 200 || response.statusCode == 201) {
-        print('Cập nhật hồ sơ thành công.');
         return true;
       }
       final errorMessage =
           response.data['message'] ??
           'Cập nhật thất bại. Mã: ${response.statusCode}';
-      print('Lỗi API khi cập nhật hồ sơ: $errorMessage');
       return errorMessage;
     } on DioException catch (e) {
       final statusCode = e.response?.statusCode;
-      final serverMessage = e.response?.data is Map ? e.response?.data['message'] : null;
-      
+      final serverMessage = e.response?.data is Map
+          ? e.response?.data['message']
+          : null;
       String errorMessage = 'Lỗi kết nối mạng hoặc server.';
-      
       if (statusCode != null) {
-          errorMessage = 'Lỗi $statusCode: ${serverMessage ?? e.message}';
+        errorMessage = 'Lỗi $statusCode: ${serverMessage ?? e.message}';
       } else {
-          errorMessage = e.message ?? 'Lỗi kết nối mạng.';
+        errorMessage = e.message ?? 'Lỗi kết nối mạng.';
       }
-
-      print('Lỗi Dio khi cập nhật hồ sơ: $errorMessage');
       return errorMessage;
     } catch (e) {
-      print('Lỗi không xác định khi cập nhật hồ sơ: $e');
       return 'Lỗi không xác định.';
     }
   }
@@ -178,10 +168,14 @@ class _ProfilePageState extends State<ProfilePage> {
           initialData: currentData,
           onSave: (Map<String, dynamic> newData) async {
             final fullPayload = Map<String, dynamic>.from(currentData);
-            fullPayload['id'] = userId; 
+            fullPayload['id'] = userId;
             fullPayload.addAll(newData);
-            fullPayload['skill'] = fullPayload['skill'] is List ? fullPayload['skill'] : [];
-            fullPayload['certification'] = fullPayload['certification'] is List ? fullPayload['certification'] : [];
+            fullPayload['skill'] = fullPayload['skill'] is List
+                ? fullPayload['skill']
+                : [];
+            fullPayload['certification'] = fullPayload['certification'] is List
+                ? fullPayload['certification']
+                : [];
 
             final result = await _userService.patchUserProfile(
               userId,
@@ -191,9 +185,10 @@ class _ProfilePageState extends State<ProfilePage> {
           },
         ),
       );
-    }
-    else if (section == 'Skills' || section == 'Certifications') {
-      final String dataKey = section.toLowerCase() == 'skills' ? 'skill' : 'certification';
+    } else if (section == 'Skills' || section == 'Certifications') {
+      final String dataKey = section.toLowerCase() == 'skills'
+          ? 'skill'
+          : 'certification';
       final dynamic rawList = currentData[dataKey];
       final List<String> currentList = rawList is List
           ? List<String>.from(rawList)
@@ -205,10 +200,14 @@ class _ProfilePageState extends State<ProfilePage> {
           initialList: currentList,
           onSave: (List<String> newList) async {
             final fullPayload = Map<String, dynamic>.from(currentData);
-            fullPayload['id'] = userId; 
+            fullPayload['id'] = userId;
             fullPayload[dataKey] = newList;
-            final String otherKey = dataKey == 'skill' ? 'certification' : 'skill';
-            fullPayload[otherKey] = fullPayload[otherKey] is List ? fullPayload[otherKey] : [];
+            final String otherKey = dataKey == 'skill'
+                ? 'certification'
+                : 'skill';
+            fullPayload[otherKey] = fullPayload[otherKey] is List
+                ? fullPayload[otherKey]
+                : [];
 
             final result = await _userService.patchUserProfile(
               userId,
@@ -220,7 +219,7 @@ class _ProfilePageState extends State<ProfilePage> {
       );
     }
   }
-  
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -376,10 +375,7 @@ class _ProfilePageState extends State<ProfilePage> {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            '$title: ',
-            style: const TextStyle(fontWeight: FontWeight.bold),
-          ),
+          Text('$title: ', style: const TextStyle(fontWeight: FontWeight.bold)),
           Expanded(child: Text(value)),
         ],
       ),

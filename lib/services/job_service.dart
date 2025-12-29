@@ -1,53 +1,51 @@
 import 'package:dart_jsonwebtoken/dart_jsonwebtoken.dart';
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../api/api_client.dart';
 import '../objects/works.dart';
 
 class JobService {
   final ApiClient _client = ApiClient();
-  static const String _basePath = '/api/cong-viec/lay-danh-sach-cong-viec-theo-ten';
+  static const String _basePath =
+      '/api/cong-viec/lay-danh-sach-cong-viec-theo-ten';
 
   Future<dynamic> searchJobsByName(String jobName) async {
     final encodedJobName = Uri.encodeComponent(jobName);
     final String path = '$_basePath/$encodedJobName';
-
-    print('[GET] Tìm kiếm công việc: $path');
 
     try {
       final response = await _client.get(path);
 
       if (response.statusCode == 200 && response.data != null) {
         final responseData = response.data as Map<String, dynamic>;
+        final List<dynamic>? jobListRaw =
+            responseData['content'] as List<dynamic>?;
 
-        final List<dynamic>? jobListRaw = responseData['content'] as List<dynamic>?;
-        
         if (jobListRaw != null) {
-
           return jobListRaw.cast<Map<String, dynamic>>();
         }
         return 'Không tìm thấy danh sách công việc.';
       }
 
-      final errorMessage = response.data['message'] ?? 'Tìm kiếm thất bại. Mã: ${response.statusCode}';
-      print('Lỗi API khi tìm kiếm: $errorMessage');
-      return errorMessage;
-
+      return response.data['message'] ??
+          'Tìm kiếm thất bại. Mã: ${response.statusCode}';
     } on DioException catch (e) {
-      final statusCode = e.response?.statusCode;
-      final errorMessage = e.response?.data['message'] ?? e.message;
-      
-      if (statusCode == 404) {
+      if (kDebugMode) {
+        print('JobService search error: ${e.message}');
+      }
+
+      if (e.response?.statusCode == 404) {
         return 'Không tìm thấy công việc phù hợp.';
       }
-      if (statusCode == 401) {
-        return 'Lỗi xác thực: Token không hợp lệ.';
+      if (e.response?.statusCode == 401) {
+        return 'Lỗi xác thực.';
       }
-
-      print('Lỗi Dio khi tìm kiếm: $errorMessage');
-      return errorMessage ?? 'Lỗi kết nối mạng.';
+      return 'Lỗi kết nối mạng.';
     } catch (e) {
-      print('Lỗi không xác định khi tìm kiếm công việc: $e');
+      if (kDebugMode) {
+        print('Unknown JobService error: $e');
+      }
       return 'Lỗi không xác định.';
     }
   }
@@ -58,8 +56,6 @@ class JobCategoryService {
   static const String _menuPath = '/api/cong-viec/lay-menu-loai-cong-viec';
 
   Future<dynamic> fetchJobMenu() async {
-    print('[GET] Lấy menu loại công việc: $_menuPath');
-
     try {
       final response = await _client.get(_menuPath);
 
@@ -70,26 +66,24 @@ class JobCategoryService {
 
         if (content != null) {
           return content
-              .map(
-                (item) => LoaiCongViec.fromJson(item as Map<String, dynamic>),
-              )
+              .map((item) =>
+                  LoaiCongViec.fromJson(item as Map<String, dynamic>))
               .toList();
         }
-        return 'Phản hồi không chứa dữ liệu menu hợp lệ.';
+        return 'Phản hồi không hợp lệ.';
       }
 
-      final errorMessage =
-          response.data['message'] ??
+      return response.data['message'] ??
           'Lấy menu thất bại. Mã: ${response.statusCode}';
-      print('Lỗi API khi lấy menu: $errorMessage');
-      return errorMessage;
     } on DioException catch (e) {
-      final statusCode = e.response?.statusCode;
-      final errorMessage = e.response?.data['message'] ?? e.message;
-      print('Lỗi Dio khi lấy menu: $errorMessage (Status: $statusCode)');
-      return errorMessage ?? 'Lỗi kết nối mạng';
+      if (kDebugMode) {
+        print('JobCategoryService error: ${e.message}');
+      }
+      return 'Lỗi kết nối mạng.';
     } catch (e) {
-      print('Lỗi không xác định khi lấy menu công việc: $e');
+      if (kDebugMode) {
+        print('Unknown JobCategoryService error: $e');
+      }
       return 'Lỗi không xác định.';
     }
   }
@@ -100,29 +94,24 @@ class AuthService {
   static const String _loginPath = '/api/auth/signin';
 
   Future<dynamic> signIn(String email, String password) async {
-    final Map<String, dynamic> data = {'email': email, 'password': password};
-
     try {
-      print('[POST] Gửi yêu cầu Đăng nhập: $data');
-      final response = await _client.post(_loginPath, data: data);
+      final response =
+          await _client.post(_loginPath, data: {'email': email, 'password': password});
 
       if (response.statusCode == 200 && response.data != null) {
         return response.data;
       }
-      
-      return "Đăng nhập thất bại. Phản hồi không hợp lệ.";
 
+      return 'Đăng nhập thất bại.';
     } on DioException catch (e) {
-      
-      if (e.response?.statusCode == 400 || e.response?.statusCode == 401) {
+      if (e.response?.statusCode == 400 ||
+          e.response?.statusCode == 401) {
         return e.response?.data?['message'] ??
-            "Email hoặc mật khẩu không đúng.";
+            'Email hoặc mật khẩu không đúng.';
       }
-      
-      return "Lỗi kết nối mạng: Vui lòng thử lại.";
-
-    } catch (e) {
-      return "Lỗi không xác định.";
+      return 'Lỗi kết nối mạng.';
+    } catch (_) {
+      return 'Lỗi không xác định.';
     }
   }
 }
@@ -154,36 +143,27 @@ class AccountService {
           'certification': [],
         },
       );
+
       if (response.statusCode == 200 && response.data != null) {
         return response.data;
-      } else {
-        throw Exception("Đăng ký thất bại.");
       }
+      return 'Đăng ký thất bại.';
     } on DioException catch (e) {
-      if (e.response?.statusCode == 400 ||
-          e.response?.statusCode == 409 ||
-          e.response?.statusCode == 401) {
-        return e.response?.data['message'] ??
-            "Lỗi đăng ký: Dữ liệu không hợp lệ.";
-      }
-      return "Lỗi kết nối mạng: Vui lòng thử lại.";
-    } catch (e) {
-      return "Lỗi không xác định: $e";
+      return e.response?.data['message'] ?? 'Lỗi đăng ký.';
+    } catch (_) {
+      return 'Lỗi không xác định.';
     }
   }
 }
+
 class CommentService {
   final ApiClient _client = ApiClient();
   static const String _basePath =
       '/api/binh-luan/lay-binh-luan-theo-cong-viec';
 
   Future<dynamic> fetchCommentsByJobId(int maCongViec) async {
-    final String path = '$_basePath/$maCongViec';
-
-    print('[GET] Lấy bình luận theo công việc: $path');
-
     try {
-      final response = await _client.get(path);
+      final response = await _client.get('$_basePath/$maCongViec');
 
       if (response.statusCode == 200 && response.data != null) {
         final responseData = response.data as Map<String, dynamic>;
@@ -193,31 +173,16 @@ class CommentService {
         if (content != null) {
           return BinhLuan.fromJsonList(content);
         }
-
-        return 'Không có bình luận nào.';
+        return 'Không có bình luận.';
       }
 
-      final errorMessage =
-          response.data['message'] ??
-          'Lấy bình luận thất bại. Mã: ${response.statusCode}';
-      print('Lỗi API khi lấy bình luận: $errorMessage');
-      return errorMessage;
-
+      return response.data['message'] ?? 'Lấy bình luận thất bại.';
     } on DioException catch (e) {
-      final statusCode = e.response?.statusCode;
-      final errorMessage = e.response?.data['message'] ?? e.message;
-
-      if (statusCode == 404) {
-        return 'Không tìm thấy bình luận cho công việc này.';
+      if (kDebugMode) {
+        print('CommentService error: ${e.message}');
       }
-      if (statusCode == 401) {
-        return 'Lỗi xác thực: Token không hợp lệ.';
-      }
-
-      print('Lỗi Dio khi lấy bình luận: $errorMessage');
-      return errorMessage ?? 'Lỗi kết nối mạng.';
-    } catch (e) {
-      print('Lỗi không xác định khi lấy bình luận: $e');
+      return 'Lỗi kết nối mạng.';
+    } catch (_) {
       return 'Lỗi không xác định.';
     }
   }
@@ -225,55 +190,49 @@ class CommentService {
 
 class JobDetailService {
   final ApiClient _client = ApiClient();
-  static const String _basePath = '/api/cong-viec/lay-cong-viec-chi-tiet';
+  static const String _basePath =
+      '/api/cong-viec/lay-cong-viec-chi-tiet';
 
   Future<dynamic> fetchJobDetailById(int maCongViec) async {
-    final String path = '$_basePath/$maCongViec';
-
-    print('[GET] Lấy công việc chi tiết: $path');
-
     try {
-      final response = await _client.get(path);
+      final response = await _client.get('$_basePath/$maCongViec');
 
       if (response.statusCode == 200 && response.data != null) {
         final responseData = response.data as Map<String, dynamic>;
-        final List<dynamic>? content = responseData['content'] as List<dynamic>?;
+        final List<dynamic>? content =
+            responseData['content'] as List<dynamic>?;
 
         if (content != null && content.isNotEmpty) {
           return CongViecItem.fromJson(
-            content[0] as Map<String, dynamic>,
-          );
+              content.first as Map<String, dynamic>);
         }
-        return 'Không tìm thấy thông tin chi tiết cho công việc này.';
+        return 'Không tìm thấy công việc.';
       }
 
-      return response.data['message'] ?? 'Lấy chi tiết công việc thất bại.';
-      
-    } on DioException catch (e) {
-      final statusCode = e.response?.statusCode;
-      final errorMessage = e.response?.data['message'] ?? e.message;
-
-      if (statusCode == 404) return 'Không tìm thấy công việc.';
-      if (statusCode == 401) return 'Lỗi xác thực.';
-
-      return errorMessage ?? 'Lỗi kết nối mạng.';
-    } catch (e) {
-      print('Lỗi không xác định khi lấy chi tiết: $e');
+      return 'Lấy chi tiết thất bại.';
+    } on DioException catch (_) {
+      return 'Lỗi kết nối mạng.';
+    } catch (_) {
       return 'Lỗi không xác định.';
     }
   }
 }
+
 class PostComment {
   final ApiClient _client = ApiClient();
+
   Future<int?> _getUserId() async {
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('user_token');
     if (token == null) return null;
+
     try {
       final jwt = JWT.decode(token);
       return int.tryParse(jwt.payload['id'].toString());
     } catch (e) {
-      print("Lỗi giải mã Token: $e");
+      if (kDebugMode) {
+        print('JWT decode error: $e');
+      }
       return null;
     }
   }
@@ -283,45 +242,28 @@ class PostComment {
     required String content,
     required int rating,
   }) async {
-    final SharedPreferences prefs = await SharedPreferences.getInstance();
-    final String? userToken = prefs.getString('user_token');
-    final int? userId = await _getUserId();
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('user_token');
+    final userId = await _getUserId();
 
-    if (userId == null || userToken == null) {
-      print("Lỗi: Thiếu User ID hoặc Token đăng nhập");
-      return false;
-    }
-
-    final Map<String, dynamic> data = {
-      "id": 0,
-      "maCongViec": jobId,
-      "maNguoiBinhLuan": userId,
-      "ngayBinhLuan": DateTime.now().toIso8601String(), 
-      "noiDung": content,
-      "saoBinhLuan": rating,
-    };
+    if (userId == null || token == null) return false;
 
     try {
-      print("Payload: $data");
-
       final response = await _client.post(
         '/api/binh-luan',
-        data: data,
-        options: Options(
-          headers: {
-            'token': userToken,
-          },
-        ),
+        data: {
+          'id': 0,
+          'maCongViec': jobId,
+          'maNguoiBinhLuan': userId,
+          'ngayBinhLuan': DateTime.now().toIso8601String(),
+          'noiDung': content,
+          'saoBinhLuan': rating,
+        },
+        options: Options(headers: {'token': token}),
       );
 
-      print("Kết quả POST: ${response.statusCode}");
       return response.statusCode == 200 || response.statusCode == 201;
-    } on DioException catch (e) {
-      print("Lỗi API (Status Code): ${e.response?.statusCode}");
-      print("Thông điệp từ Server: ${e.response?.data}"); 
-      return false;
-    } catch (e) {
-      print("Lỗi không xác định: $e");
+    } catch (_) {
       return false;
     }
   }
